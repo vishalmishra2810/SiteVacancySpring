@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/jobs")
@@ -30,5 +31,28 @@ public class JobController {
     @GetMapping
     public List<JobListing> getAllJobs() {
         return jobs;
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteJobListing(@PathVariable Long id) {
+
+        System.out.println(id + "id is here!");
+        try {
+            // Check if job exists
+            Optional<JobListing> existingJob = jobListingRepository.findById(id);
+            if (existingJob.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // Delete from database
+            jobListingRepository.deleteById(id);
+
+            // Also delete from in-memory list if you're maintaining it
+            jobs.removeIf(job -> job.getId().equals(id));
+
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error deleting job: " + e.getMessage());
+        }
     }
 }
